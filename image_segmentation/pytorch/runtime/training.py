@@ -59,7 +59,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
         callback.on_fit_start()
     for epoch in range(1, flags.epochs + 1):
         cumulative_loss = []
-        train_loader.sampler.set_epoch(epoch)
+
         if epoch <= flags.lr_warmup_epochs and flags.lr_warmup_epochs > 0:
             lr_warmup(optimizer, flags.init_learning_rate, flags.learning_rate, epoch, flags.lr_warmup_epochs)
         mllog_start(key=CONSTANTS.BLOCK_START, sync=False,
