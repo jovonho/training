@@ -1,9 +1,12 @@
 #!/bin/bash
 
 if [[ ! -d results ]]
+then
     mkdir results
 fi
+
 if [[ ! -d ckpts ]]
+then
     mkdir ckpts
 fi
 

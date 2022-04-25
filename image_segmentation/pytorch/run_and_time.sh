@@ -5,7 +5,6 @@ set -e
 # to use the script:
 #   run_and_time.sh <random seed 1-5>
 
-
 SEED=${1:--1}
 # If second argument is given, interpret it as the world size (num GPUs) for experiments
 # It's exported as a environment variable. Default is the max number available on the system
