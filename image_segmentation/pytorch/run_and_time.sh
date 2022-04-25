@@ -5,16 +5,18 @@ set -e
 # to use the script:
 #   run_and_time.sh <random seed 1-5>
 
-export WORLD_SIZE=8
 
 SEED=${1:--1}
+# If second argument is given, interpret it as the world size (num GPUs)  
+export WORLD_SIZE=${2:-8}
 
-MAX_EPOCHS=4000
+# Hard coded values for experiments
+MAX_EPOCHS=75
 QUALITY_THRESHOLD="0.908"
-START_EVAL_AT=1000
-EVALUATE_EVERY=20
+START_EVAL_AT=25
+EVALUATE_EVERY=2
 LEARNING_RATE="0.8"
-LR_WARMUP_EPOCHS=200
+LR_WARMUP_EPOCHS=25
 DATASET_DIR="/data"
 BATCH_SIZE=2
 GRADIENT_ACCUMULATION_STEPS=1
