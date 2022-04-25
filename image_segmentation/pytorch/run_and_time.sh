@@ -7,13 +7,15 @@ set -e
 
 
 SEED=${1:--1}
-# If second argument is given, interpret it as the world size (num GPUs)  
-export WORLD_SIZE=${2:-8}
+# If second argument is given, interpret it as the world size (num GPUs) for experiments
+# It's exported as a environment variable. Default is the max number available on the system
+$num_gpus=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+export WORLD_SIZE=${2:-$num_gpus}
 
 # Hard coded values for experiments
-MAX_EPOCHS=75
+MAX_EPOCHS=100
 QUALITY_THRESHOLD="0.908"
-START_EVAL_AT=25
+START_EVAL_AT=50
 EVALUATE_EVERY=2
 LEARNING_RATE="0.8"
 LR_WARMUP_EPOCHS=25
