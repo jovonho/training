@@ -3,14 +3,12 @@ set -e
 
 # runs benchmark and reports time to convergence
 # to use the script:
-#   run_and_time.sh <random seed 1-5>
+#   run_and_time.sh <random seed 1-5> <num_gpus>
 
 SEED=${1:--1}
-# If second argument is given, interpret it as the world size (num GPUs) for experiments
-# It's exported as a environment variable. Default is one
-export WORLD_SIZE=${2:-1}
+ddplaunch=$(python -c "from os import path; import torch; print(path.join(path.dirname(torch.__file__), 'distributed', 'launch.py'))")
 
-# Hard coded values for experiments
+NUM_GPUS=${2:-1}
 MAX_EPOCHS=50
 QUALITY_THRESHOLD="0.908"
 START_EVAL_AT=25
@@ -35,7 +33,8 @@ from mlperf_logging.mllog import constants
 from runtime.logging import mllog_event
 mllog_event(key=constants.CACHE_CLEAR, value=True)"
 
-  python main.py --data_dir ${DATASET_DIR} \
+  python $ddplaunch --nnode=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} main.py \
+    --data_dir ${DATASET_DIR} \
     --epochs ${MAX_EPOCHS} \
     --evaluate_every ${EVALUATE_EVERY} \
     --start_eval_at ${START_EVAL_AT} \
@@ -47,7 +46,7 @@ mllog_event(key=constants.CACHE_CLEAR, value=True)"
     --seed ${SEED} \
     --lr_warmup_epochs ${LR_WARMUP_EPOCHS} \
     --save_ckpt_path ${SAVE_CKPT_PATH} \
-    --singlenode_multigpu "True"
+    --num_workers 0
 
 	# end timing
 	end=$(date +%s)
