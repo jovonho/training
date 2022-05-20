@@ -33,9 +33,9 @@ def lr_warmup(optimizer, init_lr, lr, current_epoch, warmup_epochs):
 
 def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, callbacks, is_distributed):
     rank = get_rank()
-
     filename=os.path.join("/results", f'cases_{rank}.log')
     logfile = open(filename, "w")
+    print(f"Rank {rank} opened {logfile} for writing\n")
 
     world_size = get_world_size()
     torch.backends.cudnn.benchmark = flags.cudnn_benchmark
@@ -63,6 +63,10 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
         callback.on_fit_start()
     for epoch in range(1, flags.epochs + 1):
         logfile.write(f"Rank {rank} starting epoch {epoch}\n")
+
+        if epoch == 4:
+            logfile.close()
+            exit(0)
 
         cumulative_loss = []
         if epoch <= flags.lr_warmup_epochs and flags.lr_warmup_epochs > 0:
