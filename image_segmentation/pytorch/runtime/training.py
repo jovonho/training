@@ -1,4 +1,5 @@
 from tqdm import tqdm
+from pathlib import Path
 
 import torch
 from torch.optim import Adam, SGD
@@ -31,8 +32,10 @@ def lr_warmup(optimizer, init_lr, lr, current_epoch, warmup_epochs):
 
 
 def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, callbacks, is_distributed):
+    Path("./cases_per_rank").mkdir(exist_ok=True, parents=True)
     rank = get_rank()
-    print(rank)
+    logfile = open(f"./cases_per_rank/cases_{rank}", "w")
+
     world_size = get_world_size()
     torch.backends.cudnn.benchmark = flags.cudnn_benchmark
     torch.backends.cudnn.deterministic = flags.cudnn_deterministic
@@ -58,6 +61,8 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
     for callback in callbacks:
         callback.on_fit_start()
     for epoch in range(1, flags.epochs + 1):
+        logfile(f"Rank {rank} starting epoch {epoch}")
+
         cumulative_loss = []
         if epoch <= flags.lr_warmup_epochs and flags.lr_warmup_epochs > 0:
             lr_warmup(optimizer, flags.init_learning_rate, flags.learning_rate, epoch, flags.lr_warmup_epochs)
@@ -72,7 +77,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
         optimizer.zero_grad()
         for iteration, batch in enumerate(tqdm(train_loader, disable=(rank != 0) or not flags.verbose)):
             image, label, casename = batch
-            mllog_event(key=f'rank: {rank} loading case {casename}', value='')
+            logfile.write(f"Rank {rank} loading case {casename}")
 
             image, label = image.to(device), label.to(device)
             for callback in callbacks:
@@ -102,6 +107,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
         mllog_end(key=CONSTANTS.EPOCH_STOP, sync=False,
                   metadata={CONSTANTS.EPOCH_NUM: epoch, 'current_lr': optimizer.param_groups[0]['lr']})
+        logfile(f"Rank {rank} ending epoch {epoch}")
 
         if flags.lr_decay_epochs:
             scheduler.step()
@@ -111,7 +117,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
             del output
             mllog_start(key=CONSTANTS.EVAL_START, value=epoch, metadata={CONSTANTS.EPOCH_NUM: epoch}, sync=False)
 
-            eval_metrics = evaluate(flags, model, val_loader, loss_fn, score_fn, device, epoch)
+            eval_metrics = evaluate(flags, model, val_loader, loss_fn, score_fn, device, logfile, epoch)
             eval_metrics["train_loss"] = sum(cumulative_loss) / len(cumulative_loss)
 
             mllog_event(key=CONSTANTS.EVAL_ACCURACY,
@@ -137,5 +143,8 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
     mllog_end(key=CONSTANTS.RUN_STOP, sync=True,
               metadata={CONSTANTS.STATUS: CONSTANTS.SUCCESS if is_successful else CONSTANTS.ABORTED})
+    logfile(f"Rank {rank} ending training")
+    logfile.close()
+
     for callback in callbacks:
         callback.on_fit_end()
