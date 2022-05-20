@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from pathlib import Path
+import os
 
 import torch
 from torch.optim import Adam, SGD
@@ -32,9 +32,10 @@ def lr_warmup(optimizer, init_lr, lr, current_epoch, warmup_epochs):
 
 
 def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, callbacks, is_distributed):
-    Path("./cases_per_rank").mkdir(exist_ok=True, parents=True)
     rank = get_rank()
-    logfile = open(f"./cases_per_rank/cases_{rank}", "w")
+
+    filename=os.path.join("/results", f'cases_{rank}.log')
+    logfile = open(filename, "w")
 
     world_size = get_world_size()
     torch.backends.cudnn.benchmark = flags.cudnn_benchmark
@@ -61,7 +62,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
     for callback in callbacks:
         callback.on_fit_start()
     for epoch in range(1, flags.epochs + 1):
-        logfile(f"Rank {rank} starting epoch {epoch}")
+        logfile.write(f"Rank {rank} starting epoch {epoch}")
 
         cumulative_loss = []
         if epoch <= flags.lr_warmup_epochs and flags.lr_warmup_epochs > 0:
@@ -107,7 +108,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
         mllog_end(key=CONSTANTS.EPOCH_STOP, sync=False,
                   metadata={CONSTANTS.EPOCH_NUM: epoch, 'current_lr': optimizer.param_groups[0]['lr']})
-        logfile(f"Rank {rank} ending epoch {epoch}")
+        logfile.write(f"Rank {rank} ending epoch {epoch}")
 
         if flags.lr_decay_epochs:
             scheduler.step()
@@ -143,7 +144,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
     mllog_end(key=CONSTANTS.RUN_STOP, sync=True,
               metadata={CONSTANTS.STATUS: CONSTANTS.SUCCESS if is_successful else CONSTANTS.ABORTED})
-    logfile(f"Rank {rank} ending training")
+    logfile.write(f"Rank {rank} ending training")
     logfile.close()
 
     for callback in callbacks:
