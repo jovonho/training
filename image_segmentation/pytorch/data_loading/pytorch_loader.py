@@ -147,12 +147,10 @@ class PytTrain(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        mllog_event(key=f'pid: {os.getpid()} loading case ', value=f"{self.images[idx]}")
-
         data = {"image": np.load(self.images[idx]), "label": np.load(self.labels[idx])}
         data = self.rand_crop(data)
         data = self.train_transforms(data)
-        return data["image"], data["label"]
+        return data["image"], data["label"], f"{self.images[idx]}"
 
 
 class PytVal(Dataset):
@@ -163,7 +161,7 @@ class PytVal(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        return np.load(self.images[idx]), np.load(self.labels[idx])
+        return np.load(self.images[idx]), np.load(self.labels[idx]), f"{self.images[idx]}"
 
 
 

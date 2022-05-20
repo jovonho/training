@@ -9,17 +9,17 @@ SEED=${1:--1}
 
 ddplaunch=$(python -c "from os import path; import torch; print(path.join(path.dirname(torch.__file__), 'distributed', 'launch.py'))")
 
-PROC_PER_NODE=${2:--1}
-MAX_EPOCHS=4000
+PROC_PER_NODE=${2:-1}
+MAX_EPOCHS=50
 QUALITY_THRESHOLD="0.908"
-START_EVAL_AT=1000
-EVALUATE_EVERY=20
+START_EVAL_AT=25
+EVALUATE_EVERY=2
 LEARNING_RATE="0.8"
-LR_WARMUP_EPOCHS=200
+LR_WARMUP_EPOCHS=10
 DATASET_DIR="/data"
 BATCH_SIZE=2
 GRADIENT_ACCUMULATION_STEPS=1
-
+SAVE_CKPT_PATH="/ckpts"
 
 if [ -d ${DATASET_DIR} ]
 then
@@ -45,7 +45,9 @@ mllog_event(key=constants.CACHE_CLEAR, value=True)"
     --ga_steps ${GRADIENT_ACCUMULATION_STEPS} \
     --learning_rate ${LEARNING_RATE} \
     --seed ${SEED} \
-    --lr_warmup_epochs ${LR_WARMUP_EPOCHS}
+    --lr_warmup_epochs ${LR_WARMUP_EPOCHS} \
+    --save_ckpt_path ${SAVE_CKPT_PATH} \
+    --num_workers 0
 
 	# end timing
 	end=$(date +%s)

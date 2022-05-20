@@ -70,7 +70,9 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
         loss_value = None
         optimizer.zero_grad()
         for iteration, batch in enumerate(tqdm(train_loader, disable=(rank != 0) or not flags.verbose)):
-            image, label = batch
+            image, label, casename = batch
+            mllog_event(key=f'rank: {rank} loading case {casename}', value='')
+
             image, label = image.to(device), label.to(device)
             for callback in callbacks:
                 callback.on_batch_start()
