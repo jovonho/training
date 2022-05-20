@@ -49,7 +49,7 @@ def main():
     flags.seed = worker_seed
     model = Unet3D(1, 3, normalization=flags.normalization, activation=flags.activation)
 
-    mllog_event(key='flags', value=flags, sync=False)
+    # mllog_event(key='flags', value=flags, sync=False)
 
     mllog_end(key=constants.INIT_STOP, sync=True)
     mllog_start(key=constants.RUN_START, sync=True)
