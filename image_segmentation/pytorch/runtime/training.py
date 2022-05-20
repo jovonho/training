@@ -62,7 +62,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
     for callback in callbacks:
         callback.on_fit_start()
     for epoch in range(1, flags.epochs + 1):
-        logfile.write(f"Rank {rank} starting epoch {epoch}")
+        logfile.write(f"Rank {rank} starting epoch {epoch}\n")
 
         cumulative_loss = []
         if epoch <= flags.lr_warmup_epochs and flags.lr_warmup_epochs > 0:
@@ -77,8 +77,8 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
         loss_value = None
         optimizer.zero_grad()
         for iteration, batch in enumerate(tqdm(train_loader, disable=(rank != 0) or not flags.verbose)):
-            image, label, casename = batch
-            logfile.write(f"Rank {rank} loading case {casename}")
+            image, label, cases = batch
+            logfile.write(f"Rank {rank} loading cases {cases}\n")
 
             image, label = image.to(device), label.to(device)
             for callback in callbacks:
@@ -108,7 +108,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
         mllog_end(key=CONSTANTS.EPOCH_STOP, sync=False,
                   metadata={CONSTANTS.EPOCH_NUM: epoch, 'current_lr': optimizer.param_groups[0]['lr']})
-        logfile.write(f"Rank {rank} ending epoch {epoch}")
+        logfile.write(f"Rank {rank} ending epoch {epoch}\n")
 
         if flags.lr_decay_epochs:
             scheduler.step()
@@ -144,7 +144,7 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
 
     mllog_end(key=CONSTANTS.RUN_STOP, sync=True,
               metadata={CONSTANTS.STATUS: CONSTANTS.SUCCESS if is_successful else CONSTANTS.ABORTED})
-    logfile.write(f"Rank {rank} ending training")
+    logfile.write(f"Rank {rank} ending training\n")
     logfile.close()
 
     for callback in callbacks:

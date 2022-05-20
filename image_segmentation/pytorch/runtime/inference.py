@@ -31,7 +31,7 @@ def evaluate(flags, model, loader, loss_fn, score_fn, device, logfile, epoch=0, 
     with torch.no_grad():
         for i, batch in enumerate(tqdm(loader, disable=(rank != 0) or not flags.verbose)):
             image, label, casename = batch
-            logfile.write(f"Rank {rank} evaluating case {casename}")
+            logfile.write(f"Rank {rank} evaluating cases {casename}\n")
 
             image, label = image.to(device), label.to(device)
             if image.numel() == 0:
