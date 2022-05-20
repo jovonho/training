@@ -26,12 +26,13 @@ def evaluate(flags, model, loader, loss_fn, score_fn, device, logfile, epoch=0, 
 
     model.eval()
 
+    logfile.write(f"Starting Evaluation\n")
     eval_loss = []
     scores = []
     with torch.no_grad():
         for i, batch in enumerate(tqdm(loader, disable=(rank != 0) or not flags.verbose)):
             image, label, casename = batch
-            logfile.write(f"Rank {rank} evaluating cases {casename}\n")
+            logfile.write(f"{casename}\n")
 
             image, label = image.to(device), label.to(device)
             if image.numel() == 0:
@@ -97,10 +98,13 @@ def sliding_window_inference(inputs, labels, roi_shape, model, overlap=0.5, mode
                              padding_mode="constant", padding_val=0.0, **kwargs):
     image_shape = list(inputs.shape[2:])
     dim = len(image_shape)
+
+    # roi_shape is passed from flags.val_input_shape which is [128, 128, 128] by default
     strides = [int(roi_shape[i] * (1 - overlap)) for i in range(dim)]
 
     bounds = [image_shape[i] % strides[i] for i in range(dim)]
     bounds = [bounds[i] if bounds[i] < strides[i] // 2 else 0 for i in range(dim)]
+    # python ellipsis allows to skip dimensions
     inputs = inputs[...,
              bounds[0] // 2: image_shape[0] - (bounds[0] - bounds[0] // 2),
              bounds[1] // 2: image_shape[1] - (bounds[1] - bounds[1] // 2),

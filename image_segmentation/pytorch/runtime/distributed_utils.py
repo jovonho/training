@@ -49,7 +49,7 @@ def broadcast_seeds(seeds, device):
     return seeds
 
 
-def setup_seeds(master_seed, epochs, device):
+def setup_seeds(master_seed, world_size, epochs, device):
     """
     Generates seeds from one master_seed.
     Function returns (worker_seeds, shuffling_seeds), worker_seeds are later
@@ -79,7 +79,7 @@ def setup_seeds(master_seed, epochs, device):
     seeding_rng = random.Random(master_seed)
 
     # generate worker seeds, one seed for every distributed worker
-    worker_seeds = generate_seeds(seeding_rng, get_world_size())
+    worker_seeds = generate_seeds(seeding_rng, world_size)
 
     # generate seeds for data shuffling, one seed for every epoch
     shuffling_seeds = generate_seeds(seeding_rng, epochs)
@@ -91,13 +91,13 @@ def setup_seeds(master_seed, epochs, device):
 
 
 def get_world_size():
-    return int(os.environ.get('WORLD_SIZE', 1))
+    return int(os.environ.get("WORLD_SIZE", 1))
 
 
 def reduce_tensor(tensor, num_gpus):
     if num_gpus > 1:
         rt = tensor.clone()
-        dist.all_reduce(rt, op=dist.reduce_op.SUM)
+        dist.all_reduce(rt, op=dist.ReduceOp.SUM)
         if rt.is_floating_point():
             rt = rt / num_gpus
         else:
@@ -106,17 +106,18 @@ def reduce_tensor(tensor, num_gpus):
     return tensor
 
 
-def init_distributed():
-    world_size = int(os.environ.get('WORLD_SIZE', 1))
+def init_distributed(rank, world_size):
     distributed = world_size > 1
     if distributed:
         backend = 'nccl' if torch.cuda.is_available() else 'gloo'
-        dist.init_process_group(backend=backend,
-                                init_method='env://')
+
+        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+        # dist.init_process_group(backend=backend,
+        #                        init_method='env://')
         assert dist.is_initialized()
 
-    if get_rank() == 0:
-        print("Distributed initialized. World size:", world_size)
+    if rank == 0:
+        print("Distributed initialized. World size: ", world_size)
     return distributed
 
 

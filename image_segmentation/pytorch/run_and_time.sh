@@ -6,17 +6,21 @@ set -e
 #   run_and_time.sh <random seed 1-5>
 
 SEED=${1:--1}
+# If second argument is given, interpret it as the world size (num GPUs) for experiments
+# It's exported as a environment variable. Default is one
+export WORLD_SIZE=${2:-1}
 
-MAX_EPOCHS=4000
+# Hard coded values for experiments
+MAX_EPOCHS=50
 QUALITY_THRESHOLD="0.908"
-START_EVAL_AT=1000
-EVALUATE_EVERY=20
+START_EVAL_AT=25
+EVALUATE_EVERY=2
 LEARNING_RATE="0.8"
-LR_WARMUP_EPOCHS=200
+LR_WARMUP_EPOCHS=10
 DATASET_DIR="/data"
 BATCH_SIZE=2
 GRADIENT_ACCUMULATION_STEPS=1
-
+SAVE_CKPT_PATH="/ckpts"
 
 if [ -d ${DATASET_DIR} ]
 then
@@ -41,7 +45,9 @@ mllog_event(key=constants.CACHE_CLEAR, value=True)"
     --ga_steps ${GRADIENT_ACCUMULATION_STEPS} \
     --learning_rate ${LEARNING_RATE} \
     --seed ${SEED} \
-    --lr_warmup_epochs ${LR_WARMUP_EPOCHS}
+    --lr_warmup_epochs ${LR_WARMUP_EPOCHS} \
+    --save_ckpt_path ${SAVE_CKPT_PATH} \
+    --singlenode_multigpu "True"
 
 	# end timing
 	end=$(date +%s)
