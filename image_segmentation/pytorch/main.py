@@ -33,6 +33,9 @@ def main():
     is_distributed = init_distributed()
     world_size = get_world_size()
     local_rank = get_rank()
+    mllog_event(key='world_size', value=world_size, sync=False)
+    mllog_event(key='local_rank', value=local_rank, sync=False)
+
     worker_seeds, shuffling_seeds = setup_seeds(flags.seed, flags.epochs, device)
     worker_seed = worker_seeds[local_rank]
     seed_everything(worker_seed)
@@ -46,9 +49,15 @@ def main():
     flags.seed = worker_seed
     model = Unet3D(1, 3, normalization=flags.normalization, activation=flags.activation)
 
+    mllog_event(key='flags', value=flags, sync=False)
+
     mllog_end(key=constants.INIT_STOP, sync=True)
     mllog_start(key=constants.RUN_START, sync=True)
+
     train_dataloader, val_dataloader = get_data_loaders(flags, num_shards=world_size, global_rank=local_rank)
+    mllog_event(key='len train_dataloader', value=len(train_dataloader), sync=False)
+    mllog_event(key='len val_dataloader', value=len(val_dataloader), sync=False)
+
     samples_per_epoch = world_size * len(train_dataloader) * flags.batch_size
     mllog_event(key='samples_per_epoch', value=samples_per_epoch, sync=False)
     flags.evaluate_every = flags.evaluate_every or ceil(20*DATASET_SIZE/samples_per_epoch)
