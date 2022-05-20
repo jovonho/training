@@ -22,7 +22,7 @@ from runtime.callbacks import get_callbacks
 DATASET_SIZE = 168
 
 
-def main(local_rank, world_size):
+def main():
     mllog.config(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'unet3d.log'))
     mllog.config(filename=os.path.join("/results", 'unet3d.log'))
     mllogger = mllog.get_mllogger()
@@ -31,20 +31,15 @@ def main(local_rank, world_size):
 
     flags = PARSER.parse_args()
     dllogger = get_dllogger(flags)
-
-    if flags.singlenode_multigpu:
-        os.environ["MASTER_ADDR"] = "localhost"
-        os.environ["MASTER_PORT"] = "12355"
-        flags.num_workers = 0
-    else:
-        local_rank = flags.local_rank
-
+    local_rank = flags.local_rank
     device = get_device(local_rank)
-    torch.cuda.set_device(local_rank)
+    is_distributed = init_distributed()
+    world_size = get_world_size()
+    local_rank = get_rank()
+    mllog_event(key='world_size', value=world_size, sync=False)
+    mllog_event(key='local_rank', value=local_rank, sync=False)
 
-    is_distributed = init_distributed(rank=local_rank, world_size=world_size)
-
-    worker_seeds, shuffling_seeds = setup_seeds(flags.seed, world_size, flags.epochs, device)
+    worker_seeds, shuffling_seeds = setup_seeds(flags.seed, flags.epochs, device)
     worker_seed = worker_seeds[local_rank]
     seed_everything(worker_seed)
     mllog_event(key=constants.SEED, value=flags.seed if flags.seed != -1 else worker_seed, sync=False)
