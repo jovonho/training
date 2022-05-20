@@ -96,5 +96,4 @@ def main(local_rank, world_size):
 
 
 if __name__ == "__main__":
-    world_size = get_world_size()
-    mp.spawn(main, args=[world_size], nprocs=world_size)
+    main()
