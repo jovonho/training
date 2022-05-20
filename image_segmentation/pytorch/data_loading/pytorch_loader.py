@@ -3,7 +3,8 @@ import numpy as np
 import scipy.ndimage
 from torch.utils.data import Dataset
 from torchvision import transforms
-
+import os
+from runtime.logging import mllog_event
 
 def get_train_transforms():
     rand_flip = RandFlip()
@@ -149,7 +150,7 @@ class PytTrain(Dataset):
         data = {"image": np.load(self.images[idx]), "label": np.load(self.labels[idx])}
         data = self.rand_crop(data)
         data = self.train_transforms(data)
-        return data["image"], data["label"]
+        return data["image"], data["label"], f"{self.images[idx]}"
 
 
 class PytVal(Dataset):
@@ -160,7 +161,7 @@ class PytVal(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        return np.load(self.images[idx]), np.load(self.labels[idx])
+        return np.load(self.images[idx]), np.load(self.labels[idx]), f"{self.images[idx]}"
 
 
 
