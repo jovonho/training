@@ -18,7 +18,6 @@ def get_optimizer(params, flags):
                     weight_decay=flags.weight_decay)
     elif flags.optimizer == "lamb":
         import apex
-
         optim = apex.optimizers.FusedLAMB(params, lr=flags.learning_rate, betas=flags.lamb_betas, 
                                           weight_decay=flags.weight_decay)
     else:
@@ -112,16 +111,10 @@ def train(flags, model, train_loader, val_loader, loss_fn, score_fn, device, cal
             loss_value = reduce_tensor(loss_value, world_size).detach().cpu().numpy()
             cumulative_loss.append(loss_value)
 
-<<<<<<< HEAD
-        mllog_end(key=CONSTANTS.EPOCH_STOP, 
-                  sync=False, 
-                  metadata={CONSTANTS.EPOCH_NUM: epoch, "current_lr": optimizer.param_groups[0]["lr"]},
-        )
-=======
+
         mllog_end(key=CONSTANTS.EPOCH_STOP, sync=False,
                   metadata={CONSTANTS.EPOCH_NUM: epoch, 'current_lr': optimizer.param_groups[0]['lr']})
         logfile.write(f"Rank {rank} ending epoch {epoch}\n")
->>>>>>> original
 
         if flags.lr_decay_epochs:
             scheduler.step()
