@@ -18,4 +18,4 @@ docker run --ipc=host --name=training -it --rm --runtime=nvidia \
 	-v /data/kits19/preprocessed_data/:/data \
 	-v ${workload_dir}/results:/results \
 	-v ${workload_dir}/ckpts:/ckpts \
-	unet3d2:latest /bin/bash run_and_time.sh 1 $num_gpus
+	unet3d2:latest /bin/bash run_and_time_2.sh 1 $num_gpus
