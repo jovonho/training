@@ -3,7 +3,7 @@ set -e
 
 # runs benchmark and reports time to convergence
 # to use the script:
-#   run_and_time.sh <random seed 1-5>
+#   run_and_time.sh <random seed 1-5> <num gpus>
 
 SEED=${1:--1}
 # If second argument is given, interpret it as the world size (num GPUs) for experiments
